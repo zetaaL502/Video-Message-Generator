@@ -39,8 +39,8 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=26045 BASE_PATH=/ pnpm --filter @workspace/imessage-video-gen run dev"
-waitForPort = 26045
+args = "PORT=3000 BASE_PATH=/ pnpm --filter @workspace/imessage-video-gen run dev"
+waitForPort = 3000
 
 [[workflows.workflow]]
 name = "API Server"
