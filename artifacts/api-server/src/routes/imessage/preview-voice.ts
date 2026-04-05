@@ -19,7 +19,7 @@ router.post("/imessage/preview-voice", async (req, res): Promise<void> => {
   const tmpFile = path.join(os.tmpdir(), `preview_${Date.now()}.mp3`);
   const scriptPath = path.resolve(
     import.meta.dirname,
-    "../../../scripts/tts_generate.py"
+    "../scripts/tts_generate.py"
   );
 
   const child = spawn("python3", [scriptPath, voice, tmpFile, previewText]);

@@ -15,7 +15,7 @@ router.get("/imessage/voices", async (_req, res): Promise<void> => {
 
   const scriptPath = path.resolve(
     import.meta.dirname,
-    "../../../scripts/tts_list_voices.py"
+    "../scripts/tts_list_voices.py"
   );
 
   const child = spawn("python3", [scriptPath]);

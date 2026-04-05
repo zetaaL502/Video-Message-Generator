@@ -109,7 +109,7 @@ router.post("/imessage/generate-audio", async (req, res): Promise<void> => {
   const dir = getAudioDir(jobId);
   const scriptPath = path.resolve(
     import.meta.dirname,
-    "../../../scripts/tts_generate.py"
+    "../scripts/tts_generate.py"
   );
 
   const job: AudioJob = {
