@@ -42,6 +42,8 @@ interface VideoState {
   jobId?: string;
   timeline: TimelineEntry[];
   exportId?: string;
+  contactName: string;
+  contactStatus: string;
 
   setScriptText: (text: string) => void;
   setGenderMap: (map: Record<string, Gender>) => void;
@@ -53,6 +55,8 @@ interface VideoState {
   setJobId: (id?: string) => void;
   setTimeline: (timeline: TimelineEntry[]) => void;
   setExportId: (id?: string) => void;
+  setContactName: (name: string) => void;
+  setContactStatus: (status: string) => void;
 }
 
 export const useVideoStore = create<VideoState>((set) => ({
@@ -66,6 +70,8 @@ export const useVideoStore = create<VideoState>((set) => ({
     showFrame: true,
   },
   timeline: [],
+  contactName: "",
+  contactStatus: "iMessage",
 
   setScriptText: (scriptText) => set({ scriptText }),
   setGenderMap: (genderMap) => set({ genderMap }),
@@ -84,4 +90,6 @@ export const useVideoStore = create<VideoState>((set) => ({
   setJobId: (jobId) => set({ jobId }),
   setTimeline: (timeline) => set({ timeline }),
   setExportId: (exportId) => set({ exportId }),
+  setContactName: (contactName) => set({ contactName }),
+  setContactStatus: (contactStatus) => set({ contactStatus }),
 }));

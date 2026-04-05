@@ -3,12 +3,12 @@ import { useLocation } from "wouter";
 import { useVideoStore } from "@/store/use-video-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useGetVoices, usePreviewVoice, useUploadMedia } from "@workspace/api-client-react";
-import { ArrowRight, ArrowLeft, Play, Pause, Upload, Image as ImageIcon, Music, Video, User } from "lucide-react";
+import { ArrowRight, ArrowLeft, Play, Pause, Upload, Music, Video } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
@@ -17,8 +17,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 export default function CharactersPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { characters, genderMap, updateCharacter, settings, setSettings, setBackgroundMusicId, setBackgroundVideoId, backgroundVideoId, backgroundMusicId } = useVideoStore();
-  
+  const {
+    characters, genderMap, updateCharacter, settings, setSettings,
+    setBackgroundMusicId, setBackgroundVideoId, backgroundVideoId, backgroundMusicId,
+    contactName, contactStatus, setContactName, setContactStatus, parsedLines,
+  } = useVideoStore();
+
   const { data: voicesResponse, isLoading: isLoadingVoices } = useGetVoices();
   const previewVoiceMutation = usePreviewVoice();
   const uploadMediaMutation = useUploadMedia();
@@ -39,11 +43,11 @@ export default function CharactersPage() {
       });
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
-      
+
       if (audioElement) {
         audioElement.pause();
       }
-      
+
       setAudioElement(audio);
       setPlayingVoice(voice);
       audio.play();
@@ -76,7 +80,7 @@ export default function CharactersPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const res = await uploadMediaMutation.mutateAsync({ data: { file, type: "background_video" }});
+      const res = await uploadMediaMutation.mutateAsync({ data: { file, type: "background_video" } });
       setBackgroundVideoId(res.fileId);
       toast({ title: "Video uploaded" });
     } catch {
@@ -88,7 +92,7 @@ export default function CharactersPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const res = await uploadMediaMutation.mutateAsync({ data: { file, type: "background_music" }});
+      const res = await uploadMediaMutation.mutateAsync({ data: { file, type: "background_music" } });
       setBackgroundMusicId(res.fileId);
       toast({ title: "Music uploaded" });
     } catch {
@@ -97,6 +101,10 @@ export default function CharactersPage() {
   };
 
   const voices = voicesResponse?.voices || [];
+
+  const derivedContactName = parsedLines.find(
+    (l) => l.character !== parsedLines[0]?.character
+  )?.character || parsedLines[0]?.character || "Contact";
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -120,8 +128,8 @@ export default function CharactersPage() {
           <h3 className="text-xl font-semibold border-b border-border pb-2">Cast Setup</h3>
           {Object.entries(genderMap).map(([name, gender]) => {
             const char = characters[name];
-            const filteredVoices = voices.filter(v => v.gender.startsWith(gender));
-            
+            const filteredVoices = voices.filter((v: any) => v.gender.startsWith(gender));
+
             return (
               <Card key={name} className="border-border/50 bg-secondary/20">
                 <CardContent className="p-4 flex items-center gap-4">
@@ -135,14 +143,14 @@ export default function CharactersPage() {
                     <div className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                       <Upload className="h-5 w-5 text-white" />
                     </div>
-                    <Input 
-                      type="file" 
-                      accept="image/*" 
+                    <Input
+                      type="file"
+                      accept="image/*"
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       onChange={(e) => handleAvatarUpload(e, name)}
                     />
                   </div>
-                  
+
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="font-semibold text-lg">{name}</div>
@@ -150,27 +158,27 @@ export default function CharactersPage() {
                         {gender === "F" ? "Female" : "Male"}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
-                      <Select 
+                      <Select
                         disabled={isLoadingVoices}
-                        value={char?.voice || ""} 
+                        value={char?.voice || ""}
                         onValueChange={(val) => updateCharacter(name, { voice: val })}
                       >
                         <SelectTrigger className="w-full bg-background">
                           <SelectValue placeholder="Select a voice" />
                         </SelectTrigger>
                         <SelectContent>
-                          {filteredVoices.map(v => (
+                          {filteredVoices.map((v: any) => (
                             <SelectItem key={v.shortName} value={v.shortName}>
                               {v.name.replace("Microsoft ", "")}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      
-                      <Button 
-                        size="icon" 
+
+                      <Button
+                        size="icon"
                         variant="secondary"
                         disabled={!char?.voice || previewVoiceMutation.isPending}
                         onClick={() => handlePlayPreview(char.voice)}
@@ -184,21 +192,48 @@ export default function CharactersPage() {
               </Card>
             );
           })}
+
+          {/* Contact Display Settings */}
+          <h3 className="text-xl font-semibold border-b border-border pb-2 pt-2">Contact Display</h3>
+          <Card className="border-border/50 bg-secondary/20">
+            <CardContent className="p-4 space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Contact Name</Label>
+                <Input
+                  placeholder={derivedContactName}
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  className="bg-background"
+                />
+                <p className="text-xs text-muted-foreground">Shown in the iPhone header. Defaults to the second character's name.</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Contact Status</Label>
+                <Input
+                  placeholder="iMessage"
+                  value={contactStatus}
+                  onChange={(e) => setContactStatus(e.target.value)}
+                  className="bg-background"
+                />
+                <p className="text-xs text-muted-foreground">Small grey text shown beneath the contact name.</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
           <h3 className="text-xl font-semibold border-b border-border pb-2">Global Settings</h3>
-          
+
           <Card className="border-border bg-card">
             <CardContent className="p-6 space-y-6">
-              
+
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-base">Dark Mode UI</Label>
                   <p className="text-sm text-muted-foreground">Use iOS dark mode colors</p>
                 </div>
-                <Switch 
-                  checked={settings.darkMode} 
+                <Switch
+                  checked={settings.darkMode}
                   onCheckedChange={(c) => setSettings({ darkMode: c })}
                 />
               </div>
@@ -208,16 +243,16 @@ export default function CharactersPage() {
                   <Label className="text-base">Show Phone Frame</Label>
                   <p className="text-sm text-muted-foreground">Wrap chat in iPhone bezel</p>
                 </div>
-                <Switch 
-                  checked={settings.showFrame} 
+                <Switch
+                  checked={settings.showFrame}
                   onCheckedChange={(c) => setSettings({ showFrame: c })}
                 />
               </div>
 
               <div className="space-y-3">
                 <Label className="text-base">Video Format</Label>
-                <RadioGroup 
-                  value={settings.format} 
+                <RadioGroup
+                  value={settings.format}
                   onValueChange={(val: any) => setSettings({ format: val })}
                   className="flex gap-4"
                 >
