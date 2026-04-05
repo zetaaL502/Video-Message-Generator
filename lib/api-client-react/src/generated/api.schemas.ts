@@ -8,3 +8,136 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface Voice {
+  name: string;
+  shortName: string;
+  gender: string;
+  locale: string;
+}
+
+export interface VoicesResponse {
+  voices: Voice[];
+}
+
+export interface PreviewVoiceRequest {
+  voice: string;
+  text?: string;
+}
+
+export interface ScriptLineForAudio {
+  index: number;
+  character: string;
+  text: string;
+  voice: string;
+}
+
+export interface GenerateAudioRequest {
+  lines: ScriptLineForAudio[];
+}
+
+export interface GenerateAudioResponse {
+  jobId: string;
+  totalLines: number;
+}
+
+export type AudioProgressResponseStatus =
+  (typeof AudioProgressResponseStatus)[keyof typeof AudioProgressResponseStatus];
+
+export const AudioProgressResponseStatus = {
+  pending: "pending",
+  running: "running",
+  done: "done",
+  error: "error",
+} as const;
+
+export type AudioProgressResponseDurations = { [key: string]: number };
+
+export interface AudioProgressResponse {
+  jobId: string;
+  status: AudioProgressResponseStatus;
+  completed: number;
+  total: number;
+  failedLines: number[];
+  durations: AudioProgressResponseDurations;
+}
+
+export interface UploadResponse {
+  fileId: string;
+  url: string;
+  type: string;
+}
+
+export type TimelineEntryType =
+  (typeof TimelineEntryType)[keyof typeof TimelineEntryType];
+
+export const TimelineEntryType = {
+  text: "text",
+  image: "image",
+} as const;
+
+export interface TimelineEntry {
+  lineIndex: number;
+  startTime: number;
+  duration: number;
+  type: TimelineEntryType;
+}
+
+export type ExportSettingsFormat =
+  (typeof ExportSettingsFormat)[keyof typeof ExportSettingsFormat];
+
+export const ExportSettingsFormat = {
+  "9:16": "9:16",
+  "16:9": "16:9",
+} as const;
+
+export interface ExportSettings {
+  format: ExportSettingsFormat;
+  backgroundVideoId?: string;
+  backgroundMusicId?: string;
+  darkMode: boolean;
+  showFrame: boolean;
+}
+
+export interface ExportRequest {
+  jobId: string;
+  timeline: TimelineEntry[];
+  settings: ExportSettings;
+}
+
+export interface ExportResponse {
+  exportId: string;
+}
+
+export type ExportProgressResponseStatus =
+  (typeof ExportProgressResponseStatus)[keyof typeof ExportProgressResponseStatus];
+
+export const ExportProgressResponseStatus = {
+  pending: "pending",
+  running: "running",
+  done: "done",
+  error: "error",
+} as const;
+
+export interface ExportProgressResponse {
+  exportId: string;
+  status: ExportProgressResponseStatus;
+  progress: number;
+  errorMessage?: string;
+  filename?: string;
+}
+
+export type UploadMediaBodyType =
+  (typeof UploadMediaBodyType)[keyof typeof UploadMediaBodyType];
+
+export const UploadMediaBodyType = {
+  background_video: "background_video",
+  background_music: "background_music",
+  avatar: "avatar",
+} as const;
+
+export type UploadMediaBody = {
+  file?: Blob;
+  type?: UploadMediaBodyType;
+  characterName?: string;
+};

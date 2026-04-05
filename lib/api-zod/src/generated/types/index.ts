@@ -6,4 +6,24 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./audioProgressResponse";
+export * from "./audioProgressResponseDurations";
+export * from "./audioProgressResponseStatus";
+export * from "./exportProgressResponse";
+export * from "./exportProgressResponseStatus";
+export * from "./exportRequest";
+export * from "./exportResponse";
+export * from "./exportSettings";
+export * from "./exportSettingsFormat";
+export * from "./generateAudioRequest";
+export * from "./generateAudioResponse";
 export * from "./healthStatus";
+export * from "./previewVoiceRequest";
+export * from "./scriptLineForAudio";
+export * from "./timelineEntry";
+export * from "./timelineEntryType";
+export * from "./uploadMediaBody";
+export * from "./uploadMediaBodyType";
+export * from "./uploadResponse";
+export * from "./voice";
+export * from "./voicesResponse";

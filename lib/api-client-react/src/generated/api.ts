@@ -5,18 +5,33 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  AudioProgressResponse,
+  ExportProgressResponse,
+  ExportRequest,
+  ExportResponse,
+  GenerateAudioRequest,
+  GenerateAudioResponse,
+  HealthStatus,
+  PreviewVoiceRequest,
+  UploadMediaBody,
+  UploadResponse,
+  VoicesResponse,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -92,6 +107,788 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns a list of available English EdgeTTS voices
+ * @summary Get available EdgeTTS voices
+ */
+export const getGetVoicesUrl = () => {
+  return `/api/imessage/voices`;
+};
+
+export const getVoices = async (
+  options?: RequestInit,
+): Promise<VoicesResponse> => {
+  return customFetch<VoicesResponse>(getGetVoicesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetVoicesQueryKey = () => {
+  return [`/api/imessage/voices`] as const;
+};
+
+export const getGetVoicesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getVoices>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getVoices>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetVoicesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getVoices>>> = ({
+    signal,
+  }) => getVoices({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getVoices>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetVoicesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getVoices>>
+>;
+export type GetVoicesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get available EdgeTTS voices
+ */
+
+export function useGetVoices<
+  TData = Awaited<ReturnType<typeof getVoices>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getVoices>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetVoicesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Generates a 3-second sample audio clip using the specified voice
+ * @summary Generate a short voice preview
+ */
+export const getPreviewVoiceUrl = () => {
+  return `/api/imessage/preview-voice`;
+};
+
+export const previewVoice = async (
+  previewVoiceRequest: PreviewVoiceRequest,
+  options?: RequestInit,
+): Promise<Blob> => {
+  return customFetch<Blob>(getPreviewVoiceUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(previewVoiceRequest),
+  });
+};
+
+export const getPreviewVoiceMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof previewVoice>>,
+    TError,
+    { data: BodyType<PreviewVoiceRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof previewVoice>>,
+  TError,
+  { data: BodyType<PreviewVoiceRequest> },
+  TContext
+> => {
+  const mutationKey = ["previewVoice"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof previewVoice>>,
+    { data: BodyType<PreviewVoiceRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return previewVoice(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PreviewVoiceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof previewVoice>>
+>;
+export type PreviewVoiceMutationBody = BodyType<PreviewVoiceRequest>;
+export type PreviewVoiceMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate a short voice preview
+ */
+export const usePreviewVoice = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof previewVoice>>,
+    TError,
+    { data: BodyType<PreviewVoiceRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof previewVoice>>,
+  TError,
+  { data: BodyType<PreviewVoiceRequest> },
+  TContext
+> => {
+  return useMutation(getPreviewVoiceMutationOptions(options));
+};
+
+/**
+ * Generates audio for all script lines using EdgeTTS
+ * @summary Start audio generation for script lines
+ */
+export const getGenerateAudioUrl = () => {
+  return `/api/imessage/generate-audio`;
+};
+
+export const generateAudio = async (
+  generateAudioRequest: GenerateAudioRequest,
+  options?: RequestInit,
+): Promise<GenerateAudioResponse> => {
+  return customFetch<GenerateAudioResponse>(getGenerateAudioUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(generateAudioRequest),
+  });
+};
+
+export const getGenerateAudioMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateAudio>>,
+    TError,
+    { data: BodyType<GenerateAudioRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateAudio>>,
+  TError,
+  { data: BodyType<GenerateAudioRequest> },
+  TContext
+> => {
+  const mutationKey = ["generateAudio"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateAudio>>,
+    { data: BodyType<GenerateAudioRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateAudio(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateAudioMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateAudio>>
+>;
+export type GenerateAudioMutationBody = BodyType<GenerateAudioRequest>;
+export type GenerateAudioMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Start audio generation for script lines
+ */
+export const useGenerateAudio = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateAudio>>,
+    TError,
+    { data: BodyType<GenerateAudioRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateAudio>>,
+  TError,
+  { data: BodyType<GenerateAudioRequest> },
+  TContext
+> => {
+  return useMutation(getGenerateAudioMutationOptions(options));
+};
+
+/**
+ * @summary Get audio generation progress
+ */
+export const getGetAudioProgressUrl = (jobId: string) => {
+  return `/api/imessage/audio-progress/${jobId}`;
+};
+
+export const getAudioProgress = async (
+  jobId: string,
+  options?: RequestInit,
+): Promise<AudioProgressResponse> => {
+  return customFetch<AudioProgressResponse>(getGetAudioProgressUrl(jobId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAudioProgressQueryKey = (jobId: string) => {
+  return [`/api/imessage/audio-progress/${jobId}`] as const;
+};
+
+export const getGetAudioProgressQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAudioProgress>>,
+  TError = ErrorType<unknown>,
+>(
+  jobId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAudioProgress>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAudioProgressQueryKey(jobId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAudioProgress>>
+  > = ({ signal }) => getAudioProgress(jobId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!jobId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAudioProgress>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAudioProgressQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAudioProgress>>
+>;
+export type GetAudioProgressQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get audio generation progress
+ */
+
+export function useGetAudioProgress<
+  TData = Awaited<ReturnType<typeof getAudioProgress>>,
+  TError = ErrorType<unknown>,
+>(
+  jobId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAudioProgress>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAudioProgressQueryOptions(jobId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get a generated audio file for a line
+ */
+export const getGetAudioFileUrl = (jobId: string, lineIndex: number) => {
+  return `/api/imessage/audio-file/${jobId}/${lineIndex}`;
+};
+
+export const getAudioFile = async (
+  jobId: string,
+  lineIndex: number,
+  options?: RequestInit,
+): Promise<Blob> => {
+  return customFetch<Blob>(getGetAudioFileUrl(jobId, lineIndex), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAudioFileQueryKey = (jobId: string, lineIndex: number) => {
+  return [`/api/imessage/audio-file/${jobId}/${lineIndex}`] as const;
+};
+
+export const getGetAudioFileQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAudioFile>>,
+  TError = ErrorType<unknown>,
+>(
+  jobId: string,
+  lineIndex: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAudioFile>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAudioFileQueryKey(jobId, lineIndex);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAudioFile>>> = ({
+    signal,
+  }) => getAudioFile(jobId, lineIndex, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(jobId && lineIndex),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAudioFile>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAudioFileQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAudioFile>>
+>;
+export type GetAudioFileQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get a generated audio file for a line
+ */
+
+export function useGetAudioFile<
+  TData = Awaited<ReturnType<typeof getAudioFile>>,
+  TError = ErrorType<unknown>,
+>(
+  jobId: string,
+  lineIndex: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAudioFile>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAudioFileQueryOptions(jobId, lineIndex, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Upload a media file (background video, music, or avatar)
+ */
+export const getUploadMediaUrl = () => {
+  return `/api/imessage/upload`;
+};
+
+export const uploadMedia = async (
+  uploadMediaBody: UploadMediaBody,
+  options?: RequestInit,
+): Promise<UploadResponse> => {
+  const formData = new FormData();
+  if (uploadMediaBody.file !== undefined) {
+    formData.append(`file`, uploadMediaBody.file);
+  }
+  if (uploadMediaBody.type !== undefined) {
+    formData.append(`type`, uploadMediaBody.type);
+  }
+  if (uploadMediaBody.characterName !== undefined) {
+    formData.append(`characterName`, uploadMediaBody.characterName);
+  }
+
+  return customFetch<UploadResponse>(getUploadMediaUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export const getUploadMediaMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadMedia>>,
+    TError,
+    { data: BodyType<UploadMediaBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadMedia>>,
+  TError,
+  { data: BodyType<UploadMediaBody> },
+  TContext
+> => {
+  const mutationKey = ["uploadMedia"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadMedia>>,
+    { data: BodyType<UploadMediaBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return uploadMedia(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadMediaMutationResult = NonNullable<
+  Awaited<ReturnType<typeof uploadMedia>>
+>;
+export type UploadMediaMutationBody = BodyType<UploadMediaBody>;
+export type UploadMediaMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Upload a media file (background video, music, or avatar)
+ */
+export const useUploadMedia = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadMedia>>,
+    TError,
+    { data: BodyType<UploadMediaBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof uploadMedia>>,
+  TError,
+  { data: BodyType<UploadMediaBody> },
+  TContext
+> => {
+  return useMutation(getUploadMediaMutationOptions(options));
+};
+
+/**
+ * @summary Export iMessage video using FFmpeg
+ */
+export const getExportVideoUrl = () => {
+  return `/api/imessage/export`;
+};
+
+export const exportVideo = async (
+  exportRequest: ExportRequest,
+  options?: RequestInit,
+): Promise<ExportResponse> => {
+  return customFetch<ExportResponse>(getExportVideoUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(exportRequest),
+  });
+};
+
+export const getExportVideoMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof exportVideo>>,
+    TError,
+    { data: BodyType<ExportRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof exportVideo>>,
+  TError,
+  { data: BodyType<ExportRequest> },
+  TContext
+> => {
+  const mutationKey = ["exportVideo"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof exportVideo>>,
+    { data: BodyType<ExportRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return exportVideo(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ExportVideoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof exportVideo>>
+>;
+export type ExportVideoMutationBody = BodyType<ExportRequest>;
+export type ExportVideoMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Export iMessage video using FFmpeg
+ */
+export const useExportVideo = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof exportVideo>>,
+    TError,
+    { data: BodyType<ExportRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof exportVideo>>,
+  TError,
+  { data: BodyType<ExportRequest> },
+  TContext
+> => {
+  return useMutation(getExportVideoMutationOptions(options));
+};
+
+/**
+ * @summary Get export progress
+ */
+export const getGetExportProgressUrl = (exportId: string) => {
+  return `/api/imessage/export-progress/${exportId}`;
+};
+
+export const getExportProgress = async (
+  exportId: string,
+  options?: RequestInit,
+): Promise<ExportProgressResponse> => {
+  return customFetch<ExportProgressResponse>(
+    getGetExportProgressUrl(exportId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetExportProgressQueryKey = (exportId: string) => {
+  return [`/api/imessage/export-progress/${exportId}`] as const;
+};
+
+export const getGetExportProgressQueryOptions = <
+  TData = Awaited<ReturnType<typeof getExportProgress>>,
+  TError = ErrorType<unknown>,
+>(
+  exportId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getExportProgress>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetExportProgressQueryKey(exportId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getExportProgress>>
+  > = ({ signal }) =>
+    getExportProgress(exportId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!exportId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getExportProgress>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetExportProgressQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getExportProgress>>
+>;
+export type GetExportProgressQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get export progress
+ */
+
+export function useGetExportProgress<
+  TData = Awaited<ReturnType<typeof getExportProgress>>,
+  TError = ErrorType<unknown>,
+>(
+  exportId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getExportProgress>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetExportProgressQueryOptions(exportId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Download the exported MP4
+ */
+export const getDownloadExportUrl = (exportId: string) => {
+  return `/api/imessage/download/${exportId}`;
+};
+
+export const downloadExport = async (
+  exportId: string,
+  options?: RequestInit,
+): Promise<Blob> => {
+  return customFetch<Blob>(getDownloadExportUrl(exportId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getDownloadExportQueryKey = (exportId: string) => {
+  return [`/api/imessage/download/${exportId}`] as const;
+};
+
+export const getDownloadExportQueryOptions = <
+  TData = Awaited<ReturnType<typeof downloadExport>>,
+  TError = ErrorType<unknown>,
+>(
+  exportId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof downloadExport>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getDownloadExportQueryKey(exportId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadExport>>> = ({
+    signal,
+  }) => downloadExport(exportId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!exportId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof downloadExport>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type DownloadExportQueryResult = NonNullable<
+  Awaited<ReturnType<typeof downloadExport>>
+>;
+export type DownloadExportQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Download the exported MP4
+ */
+
+export function useDownloadExport<
+  TData = Awaited<ReturnType<typeof downloadExport>>,
+  TError = ErrorType<unknown>,
+>(
+  exportId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof downloadExport>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getDownloadExportQueryOptions(exportId, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

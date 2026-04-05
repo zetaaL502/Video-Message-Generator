@@ -1,0 +1,138 @@
+Male me a new saas feature called **"iMessage Video Generator"** to the left sidebar of my existing React + Tailwind + Node + Express SaaS.
+
+**BEFORE BUILDING ANYTHING — INSTALL ALL DEPENDENCIES FIRST:**
+
+On the Express backend run these automatically:
+```
+pip install edge-tts
+pip install asyncio
+```
+
+Add to package.json dependencies:
+```
+fluent-ffmpeg
+multer
+uuid
+cors
+```
+
+Check if FFmpeg is installed on the system — if not install it automatically via:
+```
+apt-get install -y ffmpeg
+```
+
+Verify all installations before proceeding to build anything. Show confirmation in console that edge-tts, ffmpeg, and all node packages are ready.
+
+---
+
+**OVERVIEW:**
+Clone the entire ClipGoat fake iMessage video generator (app.clipgoat.com) feature for feature but optimized for long form 20+ minute scripts instead of short 60 second videos.
+
+---
+
+**STEP 1 — SCRIPT INPUT PAGE:**
+- Large textarea for full script input
+- First line always gender map: `Sarah=F, Michael=M`
+- Every line after: `CharacterName: message text`
+- Image lines: `Sarah: [img: photo1.jpg]`
+- Support 300+ lines without breaking or lagging
+- Character names auto detected from script
+- Button to proceed to character setup
+
+---
+
+**STEP 2 — CHARACTER SETUP PAGE:**
+- Shows every unique character detected from script
+- Per character:
+  - Upload custom avatar photo OR auto generate initials avatar
+  - Voice picker dropdown showing all EdgeTTS English voices
+  - Small Play button next to each voice — plays 3 second sample saying "Hey how are you doing today" using that exact voice
+  - Default voice: F characters get en-US-AriaNeural, M characters get en-US-GuyNeural
+  - User can override any character to any voice
+- Upload background video (mp4) — fills entire iPhone frame behind chat
+- Upload background music (mp3) — optional, plays throughout video at low volume
+- Toggle: Light mode or Dark mode iMessage
+- Toggle: Vertical 9:16 or Landscape 16:9 export format
+- Toggle: iPhone 15 frame or no frame
+
+---
+
+**STEP 3 — AUDIO PRE-GENERATION:**
+- Before any playback starts pre-generate ALL audio files
+- Call EdgeTTS Python script from Node via child_process for each text line
+- Save each line as numbered mp3: `/temp_audio/line_001.mp3`, `line_002.mp3` etc
+- Show progress bar with percentage: "Generating audio 45/300 lines"
+- Measure exact duration of each audio file after generation
+- Store all durations in a timeline array for sync
+- Skip image lines — no audio needed
+- If EdgeTTS fails on any line — skip it, log which line failed, continue
+- Only proceed to playback after ALL audio is generated
+
+---
+
+**STEP 4 — IMESSAGE UI — EXACT CLIPGOAT CLONE:**
+- iPhone 15 frame with rounded corners and side buttons
+- Background video plays behind and fills entire iPhone frame
+- Chat window sits on top of background inside iPhone
+- Light mode: white chat background, grey bubbles left, green bubbles right
+- Dark mode: black chat background, dark grey bubbles left, blue bubbles right
+- Contact header at top: back arrow left, contact name centered, video icon right
+- Contact avatar shown above name — custom photo or initials circle
+- Chat scrolls up naturally as new messages appear — like real iMessage
+- Only last 5-6 bubbles visible at a time — older ones scroll up and disappear
+- Bubble animations: fast slide-up from bottom when appearing
+- Typing indicator three dots appears briefly before each bubble
+- iMessage notification sound plays when bubble appears
+- Voice audio plays immediately after notification sound
+- Next bubble appears only after current audio fully finishes
+- Same character multiple messages in a row: 0.3 second gap only between them
+- Image lines: image bubble appears, notification sound, displays 3 seconds, no voice
+- Read delivered text shown under very last message only
+
+---
+
+**STEP 5 — MP4 EXPORT USING FFMPEG:**
+- Server side rendering using FFmpeg — NOT browser screen record
+- Capture entire sequence with locked timing from timeline array
+- Mix audio tracks: notification sounds + voiceover lines perfectly synced
+- Background video included in export looping if needed
+- Background music mixed at 20% volume if uploaded
+- Export quality: 1080p
+- Vertical: 1080x1920 if 9:16 selected
+- Landscape: 1920x1080 if 16:9 selected
+- Show rendering progress bar with percentage
+- Auto filename: `story_[timestamp].mp4`
+- Download button appears when complete
+
+---
+
+**STEP 6 — ERROR HANDLING:**
+- Image file not found → red placeholder bubble with filename
+- EdgeTTS fails → skip line, log it, continue
+- FFmpeg not found → show exact install command
+- Script has no gender map → prompt user to add before continuing
+- Empty script → show error message
+- Background video missing → use solid black background as fallback
+- Long render times → show estimated time remaining
+
+---
+
+**BUILD STRICTLY IN THIS ORDER — TEST EACH STEP BEFORE MOVING TO NEXT:**
+1. Install all dependencies and verify
+2. Script parser + gender map detection
+3. Character setup page — voice picker + avatar upload + settings
+4. EdgeTTS backend integration + audio pre-generation + progress bar
+5. iMessage UI — exact ClipGoat clone with animations + sounds
+6. Playback sync engine using timeline array
+7. FFmpeg MP4 export both formats
+
+---
+
+**TECH STACK:**
+- Frontend: React + Tailwind
+- Backend: Node + Express
+- TTS: EdgeTTS via Python child_process
+- Video export: FFmpeg via fluent-ffmpeg
+- File uploads: Multer
+- Audio sync: Web Audio API
+- Unique IDs: UUID

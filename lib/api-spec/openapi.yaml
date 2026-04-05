@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: imessage
+    description: iMessage Video Generator operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,192 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /imessage/voices:
+    get:
+      operationId: getVoices
+      tags: [imessage]
+      summary: Get available EdgeTTS voices
+      description: Returns a list of available English EdgeTTS voices
+      responses:
+        "200":
+          description: List of voices
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoicesResponse"
+
+  /imessage/preview-voice:
+    post:
+      operationId: previewVoice
+      tags: [imessage]
+      summary: Generate a short voice preview
+      description: Generates a 3-second sample audio clip using the specified voice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreviewVoiceRequest"
+      responses:
+        "200":
+          description: Audio preview file
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+
+  /imessage/generate-audio:
+    post:
+      operationId: generateAudio
+      tags: [imessage]
+      summary: Start audio generation for script lines
+      description: Generates audio for all script lines using EdgeTTS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateAudioRequest"
+      responses:
+        "200":
+          description: Audio generation started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateAudioResponse"
+
+  /imessage/audio-progress/{jobId}:
+    get:
+      operationId: getAudioProgress
+      tags: [imessage]
+      summary: Get audio generation progress
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Progress update
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AudioProgressResponse"
+
+  /imessage/audio-file/{jobId}/{lineIndex}:
+    get:
+      operationId: getAudioFile
+      tags: [imessage]
+      summary: Get a generated audio file for a line
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: lineIndex
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: MP3 audio file
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+
+  /imessage/upload:
+    post:
+      operationId: uploadMedia
+      tags: [imessage]
+      summary: Upload a media file (background video, music, or avatar)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                type:
+                  type: string
+                  enum: [background_video, background_music, avatar]
+                characterName:
+                  type: string
+      responses:
+        "200":
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResponse"
+
+  /imessage/export:
+    post:
+      operationId: exportVideo
+      tags: [imessage]
+      summary: Export iMessage video using FFmpeg
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExportRequest"
+      responses:
+        "200":
+          description: Export started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportResponse"
+
+  /imessage/export-progress/{exportId}:
+    get:
+      operationId: getExportProgress
+      tags: [imessage]
+      summary: Get export progress
+      parameters:
+        - in: path
+          name: exportId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Export progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportProgressResponse"
+
+  /imessage/download/{exportId}:
+    get:
+      operationId: downloadExport
+      tags: [imessage]
+      summary: Download the exported MP4
+      parameters:
+        - in: path
+          name: exportId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: MP4 video file
+          content:
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +222,199 @@ components:
       required:
         - status
 
+    VoicesResponse:
+      type: object
+      properties:
+        voices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Voice"
+      required:
+        - voices
+
+    Voice:
+      type: object
+      properties:
+        name:
+          type: string
+        shortName:
+          type: string
+        gender:
+          type: string
+        locale:
+          type: string
+      required:
+        - name
+        - shortName
+        - gender
+        - locale
+
+    PreviewVoiceRequest:
+      type: object
+      properties:
+        voice:
+          type: string
+        text:
+          type: string
+      required:
+        - voice
+
+    GenerateAudioRequest:
+      type: object
+      properties:
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScriptLineForAudio"
+      required:
+        - lines
+
+    ScriptLineForAudio:
+      type: object
+      properties:
+        index:
+          type: integer
+        character:
+          type: string
+        text:
+          type: string
+        voice:
+          type: string
+      required:
+        - index
+        - character
+        - text
+        - voice
+
+    GenerateAudioResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+        totalLines:
+          type: integer
+      required:
+        - jobId
+        - totalLines
+
+    AudioProgressResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, done, error]
+        completed:
+          type: integer
+        total:
+          type: integer
+        failedLines:
+          type: array
+          items:
+            type: integer
+        durations:
+          type: object
+          additionalProperties:
+            type: number
+      required:
+        - jobId
+        - status
+        - completed
+        - total
+        - failedLines
+        - durations
+
+    UploadResponse:
+      type: object
+      properties:
+        fileId:
+          type: string
+        url:
+          type: string
+        type:
+          type: string
+      required:
+        - fileId
+        - url
+        - type
+
+    ExportRequest:
+      type: object
+      properties:
+        jobId:
+          type: string
+        timeline:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimelineEntry"
+        settings:
+          $ref: "#/components/schemas/ExportSettings"
+      required:
+        - jobId
+        - timeline
+        - settings
+
+    TimelineEntry:
+      type: object
+      properties:
+        lineIndex:
+          type: integer
+        startTime:
+          type: number
+        duration:
+          type: number
+        type:
+          type: string
+          enum: [text, image]
+      required:
+        - lineIndex
+        - startTime
+        - duration
+        - type
+
+    ExportSettings:
+      type: object
+      properties:
+        format:
+          type: string
+          enum: ["9:16", "16:9"]
+        backgroundVideoId:
+          type: string
+        backgroundMusicId:
+          type: string
+        darkMode:
+          type: boolean
+        showFrame:
+          type: boolean
+      required:
+        - format
+        - darkMode
+        - showFrame
+
+    ExportResponse:
+      type: object
+      properties:
+        exportId:
+          type: string
+      required:
+        - exportId
+
+    ExportProgressResponse:
+      type: object
+      properties:
+        exportId:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, done, error]
+        progress:
+          type: integer
+        errorMessage:
+          type: string
+        filename:
+          type: string
+      required:
+        - exportId
+        - status
+        - progress

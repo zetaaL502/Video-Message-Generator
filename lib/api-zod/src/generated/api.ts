@@ -14,3 +14,134 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns a list of available English EdgeTTS voices
+ * @summary Get available EdgeTTS voices
+ */
+export const GetVoicesResponse = zod.object({
+  voices: zod.array(
+    zod.object({
+      name: zod.string(),
+      shortName: zod.string(),
+      gender: zod.string(),
+      locale: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * Generates a 3-second sample audio clip using the specified voice
+ * @summary Generate a short voice preview
+ */
+export const PreviewVoiceBody = zod.object({
+  voice: zod.string(),
+  text: zod.string().optional(),
+});
+
+/**
+ * Generates audio for all script lines using EdgeTTS
+ * @summary Start audio generation for script lines
+ */
+export const GenerateAudioBody = zod.object({
+  lines: zod.array(
+    zod.object({
+      index: zod.number(),
+      character: zod.string(),
+      text: zod.string(),
+      voice: zod.string(),
+    }),
+  ),
+});
+
+export const GenerateAudioResponse = zod.object({
+  jobId: zod.string(),
+  totalLines: zod.number(),
+});
+
+/**
+ * @summary Get audio generation progress
+ */
+export const GetAudioProgressParams = zod.object({
+  jobId: zod.coerce.string(),
+});
+
+export const GetAudioProgressResponse = zod.object({
+  jobId: zod.string(),
+  status: zod.enum(["pending", "running", "done", "error"]),
+  completed: zod.number(),
+  total: zod.number(),
+  failedLines: zod.array(zod.number()),
+  durations: zod.record(zod.string(), zod.number()),
+});
+
+/**
+ * @summary Get a generated audio file for a line
+ */
+export const GetAudioFileParams = zod.object({
+  jobId: zod.coerce.string(),
+  lineIndex: zod.coerce.number(),
+});
+
+/**
+ * @summary Upload a media file (background video, music, or avatar)
+ */
+export const UploadMediaBody = zod.object({
+  file: zod.instanceof(File).optional(),
+  type: zod.enum(["background_video", "background_music", "avatar"]).optional(),
+  characterName: zod.string().optional(),
+});
+
+export const UploadMediaResponse = zod.object({
+  fileId: zod.string(),
+  url: zod.string(),
+  type: zod.string(),
+});
+
+/**
+ * @summary Export iMessage video using FFmpeg
+ */
+export const ExportVideoBody = zod.object({
+  jobId: zod.string(),
+  timeline: zod.array(
+    zod.object({
+      lineIndex: zod.number(),
+      startTime: zod.number(),
+      duration: zod.number(),
+      type: zod.enum(["text", "image"]),
+    }),
+  ),
+  settings: zod.object({
+    format: zod.enum(["9:16", "16:9"]),
+    backgroundVideoId: zod.string().optional(),
+    backgroundMusicId: zod.string().optional(),
+    darkMode: zod.boolean(),
+    showFrame: zod.boolean(),
+  }),
+});
+
+export const ExportVideoResponse = zod.object({
+  exportId: zod.string(),
+});
+
+/**
+ * @summary Get export progress
+ */
+export const GetExportProgressParams = zod.object({
+  exportId: zod.coerce.string(),
+});
+
+export const GetExportProgressResponse = zod.object({
+  exportId: zod.string(),
+  status: zod.enum(["pending", "running", "done", "error"]),
+  progress: zod.number(),
+  errorMessage: zod.string().optional(),
+  filename: zod.string().optional(),
+});
+
+/**
+ * @summary Download the exported MP4
+ */
+export const DownloadExportParams = zod.object({
+  exportId: zod.coerce.string(),
+});
