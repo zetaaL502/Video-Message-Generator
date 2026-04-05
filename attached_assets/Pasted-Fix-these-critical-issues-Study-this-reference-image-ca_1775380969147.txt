@@ -1,0 +1,71 @@
+Fix these critical issues. Study this reference image carefully — the chat must look EXACTLY like a real iPhone iMessage interface like the reference provided.
+
+**FIX 1 — IMESSAGE UI MUST LOOK EXACTLY LIKE REFERENCE IMAGE:**
+- iPhone frame with rounded corners and physical buttons on sides
+- Inside the iPhone: white background chat area
+- Top header: grey back arrow left side, unread count badge (blue circle with 99+), contact avatar circle center-top, contact name below avatar with chevron arrow, video camera icon top right
+- Grey bubbles on LEFT side with bubble tail pointing left — these are RECEIVED messages
+- Green bubbles on RIGHT side with bubble tail pointing right — these are SENT messages
+- Bubbles have rounded corners exactly like real iMessage
+- Font is San Francisco — clean, crisp, exactly like iPhone
+- Background video plays BEHIND the entire iPhone frame filling the whole screen
+- Chat area sits inside the iPhone on top of the background
+- Bubble tails must be visible and correct — left tail for grey, right tail for green
+- Messages scroll up naturally as new ones appear
+- Only show last 5-6 bubbles at a time — older ones scroll up out of view
+
+**FIX 2 — VOICE SYNC — CRITICAL:**
+This must work with ZERO overlap and ZERO mismatch. Here is the exact logic:
+
+- Parse every line and tag it: `{character: "Sarah", text: "Hey", voice: "en-US-AriaNeural", file: "line_001_sarah.mp3"}`
+- Generate audio for each line using that character's assigned voice — never mix voices
+- Store exact audio duration for every line after generation
+- Playback queue is STRICTLY sequential:
+  1. Show typing indicator for 0.8 seconds
+  2. Bubble slides up in 0.3 seconds
+  3. iMessage notification sound plays (ding)
+  4. That line's audio plays immediately — correct voice for that character always
+  5. Wait for audio.onended event to fire
+  6. Only then move to next line
+- NEVER use setTimeout for audio timing — only use audio.onended callbacks
+- Same character consecutive messages: skip typing indicator, 0.3s gap only between bubbles
+
+**FIX 3 — IMAGE AND VIDEO BUBBLES:**
+- Image lines: `Sarah: [img: photo1.jpg]` → shows image inside a bubble, plays camera shutter sound, displays for 3 seconds, no voice
+- Video lines: `Michael: [video: clip1.mp4]` → shows video player inside bubble, plays video fully before moving to next message, plays notification sound when it appears
+- Both image and video bubbles have the same rounded bubble shape as text bubbles
+- When video finishes playing → automatically move to next message
+- If file not found → show red placeholder bubble with filename text
+
+**FIX 4 — VIDEO RENDERING — MAKE IT WORK:**
+Use this exact approach for FFmpeg rendering:
+- Install puppeteer: `npm install puppeteer`
+- Backend renders the chat sequence headlessly using puppeteer
+- Puppeteer opens the preview page and captures frames at 30fps
+- Each frame is synced to the audio timeline array stored during generation
+- FFmpeg combines captured frames + all audio files in sequence into one MP4
+- Output: 1920x1080 landscape MP4 at 30fps
+- Background video included and looped if needed
+- Progress bar shows percentage during rendering
+- When complete show download button with filename `story_[timestamp].mp4`
+- Console log each step so errors are visible
+
+**FIX 5 — CONTACT NAME CUSTOMIZABLE:**
+- In Characters page add text input: "Contact Name" — defaults to second character name but fully editable
+- Add text input: "Contact Status" — small grey text under name, default "iMessage"
+- Whatever I type shows in the iPhone header throughout preview and exported video
+
+**FIX 6 — SMOOTH ANIMATIONS:**
+- Typing indicator: three animated dots bouncing smoothly for 0.8 seconds
+- Bubble entrance: smooth slide up from bottom + fade in, 0.3 seconds
+- Scroll: chat scrolls up smoothly as new messages appear — CSS scroll-behavior smooth
+- No janky jumps, no instant appearances — everything feels natural like a real iPhone
+
+**DO NOT TOUCH:**
+- Script parser
+- Gender map detection
+- Characters voice picker
+- Sidebar navigation
+- Any working features
+
+Fix in this exact order: UI first → Voice sync → Image/video bubbles → Video rendering → Contact name → Animations. Test each before moving to next.
